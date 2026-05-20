@@ -1,0 +1,2230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bev Co">
+<meta name="theme-color" content="#2EA2DC">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%232EA2DC'/%3E%3Ctext x='90' y='118' font-family='-apple-system' font-size='80' font-weight='700' fill='white' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
+<title>Bev Co Lead Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue: #2EA2DC;
+  --blue-dark: #1d8bc1;
+  --blue-light: #e6f4fb;
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --border: #e6e6e6;
+  --border-light: #f0f0f0;
+  --text: #1a1a1a;
+  --text-muted: #6b7280;
+  --text-light: #9ca3af;
+  --green: #10b981;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 30px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --tab-h: 60px;
+  --safe-bottom: env(safe-area-inset-bottom);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; padding: 0; height: 100%;
+  background: var(--bg); color: var(--text);
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+body { display: flex; flex-direction: column; overflow: hidden; overscroll-behavior: none; position: fixed; inset: 0; width: 100%; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; font-size: inherit; padding: 0; }
+input, textarea, select { font-family: inherit; font-size: 16px; color: var(--text); }
+input:focus, textarea:focus, select:focus { outline: none; }
+a { color: inherit; -webkit-touch-callout: none; }
+
+#app {
+  display: flex; flex-direction: column;
+  height: 100%; max-width: 760px; margin: 0 auto; width: 100%;
+  background: var(--surface); box-shadow: var(--shadow-lg); overflow: hidden;
+  position: relative;
+}
+
+/* HEADER */
+.app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--surface); flex-shrink: 0;
+  padding-top: max(14px, env(safe-area-inset-top));
+}
+.app-title { font-weight: 600; font-size: 18px; letter-spacing: -0.01em; }
+.app-title .dot { color: var(--blue); }
+.sync-indicator { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); margin-top: 2px; cursor: pointer; }
+.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-light); flex-shrink: 0; }
+.sync-dot.ok { background: var(--green); }
+.sync-dot.err { background: var(--red); }
+.sync-dot.busy { background: var(--amber); animation: pulse 1s infinite; }
+.icon-btn {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); transition: background 0.15s;
+}
+.icon-btn:active { background: var(--border-light); }
+.icon-btn.primary { background: var(--blue); color: white; }
+.icon-btn.primary:active { background: var(--blue-dark); }
+.icon-btn svg { width: 20px; height: 20px; }
+
+/* MAIN SCROLL CONTAINER */
+.main {
+  flex: 1;
+  overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  padding-bottom: calc(var(--tab-h) + var(--safe-bottom) + 16px);
+}
+.main.with-savebar {
+  padding-bottom: calc(var(--tab-h) + 64px + var(--safe-bottom) + 16px);
+}
+
+/* TAB BAR */
+.tab-bar {
+  display: flex; justify-content: space-around;
+  background: var(--surface); border-top: 1px solid var(--border-light);
+  padding: 6px 8px;
+  padding-bottom: calc(6px + var(--safe-bottom));
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+.tab {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 4px; color: var(--text-light); font-size: 11px; font-weight: 500;
+  border-radius: 10px;
+}
+.tab svg { width: 22px; height: 22px; }
+.tab.active { color: var(--blue); }
+
+/* LIST VIEW */
+.list-header { padding: 16px 20px 12px; display: flex; align-items: baseline; justify-content: space-between; }
+.list-header h2 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+.list-header .count { font-size: 13px; color: var(--text-muted); }
+.search-bar { padding: 0 16px 12px; }
+.search-input {
+  width: 100%; padding: 11px 14px 11px 40px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: 14px center;
+}
+.filter-chips { display: flex; gap: 8px; padding: 0 16px 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.filter-chips::-webkit-scrollbar { display: none; }
+.chip {
+  padding: 6px 12px; border-radius: 100px; background: var(--bg);
+  border: 1px solid var(--border); font-size: 13px; font-weight: 500;
+  color: var(--text-muted); white-space: nowrap; flex-shrink: 0;
+}
+.chip.active { background: var(--text); color: white; border-color: var(--text); }
+.leads-list { padding: 0 16px 24px; display: flex; flex-direction: column; gap: 10px; }
+.lead-card {
+  background: var(--surface); border: 1px solid var(--border-light);
+  border-radius: var(--radius); padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 6px;
+  cursor: pointer; transition: transform 0.1s, box-shadow 0.15s;
+}
+.lead-card:active { transform: scale(0.99); box-shadow: var(--shadow); }
+.lead-card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.lead-name { font-weight: 600; font-size: 15px; letter-spacing: -0.01em; line-height: 1.3; }
+.lead-address { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+.lead-meta { font-size: 12px; color: var(--text-light); display: flex; align-items: center; gap: 6px; margin-top: 2px; flex-wrap: wrap; }
+.lead-meta .sep { width: 3px; height: 3px; background: var(--text-light); border-radius: 50%; flex-shrink: 0; }
+.badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 100px; white-space: nowrap; letter-spacing: 0.01em; flex-shrink: 0; }
+.badge-stage-lead_generated { background: #f3f4f6; color: #4b5563; }
+.badge-stage-contacted { background: #dbeafe; color: #1e40af; }
+.badge-stage-tasting_scheduled { background: #ede9fe; color: #6d28d9; }
+.badge-stage-tasting_done { background: #fae8ff; color: #86198f; }
+.badge-stage-verbal_agreement { background: #fef3c7; color: #92400e; }
+.badge-stage-active_account { background: #d1fae5; color: #065f46; }
+.badge-stage-lost { background: #fee2e2; color: #991b1b; }
+.badge-amiable { background: var(--blue-light); color: var(--blue-dark); }
+.empty-state { padding: 60px 32px; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.empty-state h3 { margin: 0; font-size: 16px; font-weight: 600; color: var(--text); }
+.empty-state p { margin: 0; font-size: 14px; max-width: 320px; line-height: 1.5; }
+
+/* FAB */
+.fab {
+  position: absolute;
+  bottom: calc(var(--tab-h) + var(--safe-bottom) + 16px);
+  right: 20px;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--blue); color: white;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 14px rgba(46, 162, 220, 0.4);
+  z-index: 5; transition: transform 0.1s, background 0.15s;
+}
+.fab:active { transform: scale(0.95); background: var(--blue-dark); }
+.fab svg { width: 26px; height: 26px; }
+
+/* DETAIL HEADER */
+.detail-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  border-bottom: 1px solid var(--border-light);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.back-btn { display: flex; align-items: center; gap: 4px; color: var(--blue); font-weight: 500; font-size: 15px; padding: 8px 4px; min-height: 36px; }
+.back-btn svg { width: 20px; height: 20px; }
+.detail-header-actions { margin-left: auto; display: flex; gap: 6px; }
+
+/* FORM */
+.detail-body { padding: 8px 16px 24px; }
+.form-section { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+.form-section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-light); margin: 0 0 12px; }
+.field { margin-bottom: 12px; }
+.field:last-child { margin-bottom: 0; }
+.field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 4px; }
+.field input[type="text"], .field input[type="tel"], .field input[type="email"], .field input[type="number"], .field input[type="date"], .field input[type="password"], .field input[type="url"], .field select, .field textarea {
+  width: 100%; padding: 11px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg);
+  -webkit-appearance: none; appearance: none;
+}
+.field input[type="date"] { -webkit-appearance: none; min-height: 42px; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--blue); background: var(--surface); }
+.field textarea { resize: vertical; min-height: 80px; font-family: inherit; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.quick-actions { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.quick-action-btn { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: var(--blue-light); color: var(--blue-dark); border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; }
+.quick-action-btn:active { background: #d4ecf7; }
+.quick-action-btn svg { width: 16px; height: 16px; }
+
+/* AUTOCOMPLETE */
+.autocomplete-wrap { position: relative; }
+.autocomplete-list {
+  position: absolute; top: 100%; left: 0; right: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); margin-top: 4px;
+  box-shadow: var(--shadow-lg); z-index: 50;
+  max-height: 280px; overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.autocomplete-item { padding: 12px; cursor: pointer; border-bottom: 1px solid var(--border-light); min-height: 48px; }
+.autocomplete-item:last-child { border-bottom: none; }
+.autocomplete-item:active { background: var(--blue-light); }
+.autocomplete-main { font-size: 14px; font-weight: 500; color: var(--text); }
+.autocomplete-secondary { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+/* CHECKLIST */
+.checklist-section { background: linear-gradient(180deg, #f7fbfe 0%, var(--surface) 100%); border-color: #cfe6f5; }
+.checklist { display: flex; flex-direction: column; gap: 2px; }
+.checklist-item { display: flex; align-items: center; gap: 10px; padding: 10px 4px; cursor: pointer; user-select: none; min-height: 44px; }
+.checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: white; transition: background 0.15s, border-color 0.15s; }
+.checklist-item.checked .checkbox { background: var(--blue); border-color: var(--blue); }
+.checkbox svg { width: 14px; height: 14px; color: white; opacity: 0; transition: opacity 0.15s; }
+.checklist-item.checked .checkbox svg { opacity: 1; }
+.checklist-item span { font-size: 14px; color: var(--text); }
+
+/* CONTACTS */
+.contact-block { background: var(--bg); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-light); }
+.contact-block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.contact-block-title { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.remove-btn { color: var(--red); font-size: 12px; font-weight: 500; padding: 4px 8px; }
+.add-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 12px; background: transparent; border: 1px dashed var(--border); border-radius: var(--radius-sm); color: var(--blue); font-size: 13px; font-weight: 500; min-height: 44px; }
+.add-btn:active { background: var(--blue-light); }
+.add-btn svg { width: 16px; height: 16px; }
+.contact-input { width: 100%; padding: 11px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+
+/* DICTATE BUTTON */
+.dictate-inline { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 100px; background: var(--blue-light); color: var(--blue-dark); font-size: 12px; font-weight: 600; flex-shrink: 0; min-height: 36px; }
+.dictate-inline:active { background: #d4ecf7; }
+.dictate-inline svg { width: 14px; height: 14px; }
+.dictate-inline.recording { background: var(--red); color: white; animation: pulse 1.2s infinite; }
+@keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.85; } }
+.dictate-inline.unsupported { opacity: 0.5; }
+
+/* TOGGLE */
+.row-sb { display: flex; align-items: center; justify-content: space-between; }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; min-height: 44px; }
+.toggle { width: 50px; height: 30px; border-radius: 100px; background: #d1d5db; position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+.toggle.on { background: var(--blue); }
+.toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: white; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.toggle.on::after { transform: translateX(20px); }
+
+/* SAVE BAR */
+.save-bar {
+  position: absolute;
+  bottom: calc(var(--tab-h) + var(--safe-bottom));
+  left: 0; right: 0;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-top: 1px solid var(--border-light);
+  display: flex; gap: 10px;
+  z-index: 5;
+}
+.btn-primary, .btn-secondary, .btn-danger {
+  flex: 1; padding: 13px 16px; border-radius: 10px; font-size: 15px;
+  font-weight: 600; text-align: center; transition: opacity 0.15s;
+  min-height: 46px;
+}
+.btn-primary { background: var(--blue); color: white; }
+.btn-primary:active { background: var(--blue-dark); }
+.btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.btn-danger { background: var(--red); color: white; }
+.btn-primary:disabled, .btn-secondary:disabled { opacity: 0.5; pointer-events: none; }
+
+/* EXPORT & SETTINGS */
+.settings-view, .export-view { padding: 16px; }
+.export-card { background: var(--surface); border: 1px solid var(--border-light); border-radius: var(--radius); padding: 18px; margin-bottom: 12px; }
+.export-card h3 { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
+.export-card p { margin: 0 0 14px; font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+.export-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.export-btn { padding: 14px 12px; border-radius: var(--radius-sm); font-weight: 500; font-size: 14px; display: flex; flex-direction: column; align-items: center; gap: 4px; background: var(--blue-light); color: var(--blue-dark); min-height: 64px; text-decoration: none; justify-content: center; }
+.export-btn:active { background: #d4ecf7; }
+.export-btn svg { width: 22px; height: 22px; }
+
+.settings-help { font-size: 12px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+.settings-help a { color: var(--blue); }
+.settings-help code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: 11px; font-family: 'SF Mono', Menlo, monospace; }
+.test-btn { padding: 10px 16px; font-size: 13px; border-radius: 8px; min-height: 38px; width: auto; flex: 0 0 auto; }
+
+/* MODAL */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; display: flex; align-items: flex-end; justify-content: center; }
+.modal { background: var(--surface); border-radius: 16px 16px 0 0; width: 100%; max-width: 760px; max-height: 90vh; overflow-y: auto; padding: 24px 20px max(24px, env(safe-area-inset-bottom)); animation: slideUp 0.2s; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal h3 { margin: 0 0 12px; font-size: 18px; font-weight: 600; }
+.modal p { margin: 0 0 16px; color: var(--text-muted); font-size: 14px; line-height: 1.5; word-break: break-word; }
+.modal-actions { display: flex; gap: 10px; margin-top: 8px; }
+
+/* TOAST */
+.toast { position: fixed; bottom: calc(var(--tab-h) + var(--safe-bottom) + 24px); left: 50%; transform: translateX(-50%); background: var(--text); color: white; padding: 10px 18px; border-radius: 100px; font-size: 14px; font-weight: 500; z-index: 200; box-shadow: var(--shadow-lg); animation: toastIn 0.2s, toastOut 0.2s 2s forwards; max-width: 90vw; text-align: center; }
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes toastOut { to { opacity: 0; transform: translate(-50%, 12px); } }
+
+/* LOADING */
+.spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.85); z-index: 150; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; backdrop-filter: blur(4px); }
+.loading-overlay .spinner { width: 32px; height: 32px; }
+
+/* SETUP CARD */
+.setup-card { background: linear-gradient(135deg, #2EA2DC 0%, #1d8bc1 100%); color: white; border-radius: var(--radius); padding: 20px; margin: 16px; }
+.setup-card h3 { margin: 0 0 8px; font-size: 18px; }
+.setup-card p { margin: 0 0 14px; font-size: 14px; opacity: 0.95; line-height: 1.5; }
+.setup-card button { background: white; color: var(--blue-dark); padding: 12px 18px; border-radius: 8px; font-weight: 600; font-size: 14px; min-height: 44px; }
+
+/* SYNC ERROR BANNER */
+.error-banner { margin: 12px 16px 0; padding: 12px 14px; border-radius: var(--radius-sm); background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.error-banner button { color: #991b1b; font-weight: 600; text-decoration: underline; flex-shrink: 0; padding: 4px; min-height: 36px; }
+
+/* PRETTY LINK */
+.pretty-link { color: var(--blue); text-decoration: none; font-weight: 500; padding: 4px 0; min-height: 28px; display: inline-flex; align-items: center; }
+.pretty-link:active { opacity: 0.7; }
+
+/* MISC */
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="app-content"></div>
+  <nav class="tab-bar" id="tab-bar">
+    <button class="tab" data-tab="list">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h12"/></svg>
+      <span>Leads</span>
+    </button>
+    <button class="tab" data-tab="export">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>Export</span>
+    </button>
+    <button class="tab" data-tab="settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Settings</span>
+    </button>
+  </nav>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+'use strict';
+
+/* ============================================================
+   BEV CO LEAD TRACKER — iPhone Web App
+   Audit pass v3: hardening, scroll fixes, error handling,
+   keyboard handling, sync resilience, in-place DOM updates.
+   ============================================================ */
+
+// ---- Constants ----
+const APP_VERSION = '3.0';
+
+const BEV_STAGES = [
+  { id: 'lead_generated', label: 'Lead Generated' },
+  { id: 'contacted', label: 'Contacted by Bev Co' },
+  { id: 'tasting_scheduled', label: 'Tasting Scheduled' },
+  { id: 'tasting_done', label: 'Tasting Done' },
+  { id: 'verbal_agreement', label: 'Verbal Agreement' },
+  { id: 'active_account', label: 'Active Account' },
+  { id: 'lost', label: 'Lost / No-Go' },
+];
+const BEV_STAGE_LABEL = id => (BEV_STAGES.find(s => s.id === id) || {label: id}).label;
+
+const AMIABLE_STAGES = [
+  { id: 'not_in_pipeline', label: 'Not in Amiable pipeline' },
+  { id: 'initial_contact', label: 'Initial Contact' },
+  { id: 'cse_in_progress', label: 'CSE In Progress' },
+  { id: 'proposal_sent', label: 'Proposal Sent' },
+  { id: 'verbal_agreement', label: 'Verbal Agreement' },
+  { id: 'processing_live', label: 'Processing / Live' },
+  { id: 'lost', label: 'Lost / No-Go' },
+];
+
+const CHECKLIST_ITEMS = [
+  { id: 'initial_conversation', label: 'Initial conversation' },
+  { id: 'decision_maker_conversation', label: 'Decision-maker conversation' },
+  { id: 'genuine_interest', label: 'Genuine interest' },
+  { id: 'needs_identified', label: 'Needs identified' },
+  { id: 'samples_dropped', label: 'Samples dropped' },
+  { id: 'passed_to_sales', label: 'Passed to Bev Co Sales' },
+];
+
+const FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'open', label: 'Open' },
+  { id: 'active', label: 'Active' },
+  { id: 'amiable', label: 'Amiable too' },
+  { id: 'lost', label: 'Lost' },
+];
+
+const MAX_RADIUS = 50000;
+const DEFAULT_SETTINGS = {
+  sheetsUrl: '',
+  sheetUrl: '',
+  googleApiKey: '',
+  biasLat: 49.1666,
+  biasLng: -123.1336,
+  biasRadiusMeters: MAX_RADIUS,
+};
+
+// ---- State ----
+const State = {
+  leads: [],
+  settings: { ...DEFAULT_SETTINGS },
+  view: 'list',
+  searchQuery: '',
+  filter: 'all',
+  syncStatus: 'idle', // idle | busy | ok | err
+  syncMessage: '',
+  syncError: '',
+  _editingDraft: null,
+  _editingOriginal: null, // for change detection
+  _dirty: false,
+  _pendingSaves: [],
+  _syncInFlight: false,
+  _sessionToken: null, // Google Places billing session
+};
+
+// ---- Storage keys ----
+const LS = {
+  LEADS: 'bct_leads_v1',
+  SETTINGS: 'bct_settings_v1',
+  PENDING: 'bct_pending_v1',
+};
+
+function safeJsonParse(s, fallback) {
+  try { return JSON.parse(s); } catch (e) { return fallback; }
+}
+
+function loadFromLocal() {
+  const leads = localStorage.getItem(LS.LEADS);
+  if (leads) State.leads = safeJsonParse(leads, []) || [];
+
+  const s = localStorage.getItem(LS.SETTINGS);
+  if (s) {
+    const parsed = safeJsonParse(s, {});
+    if (parsed && typeof parsed === 'object') {
+      State.settings = { ...DEFAULT_SETTINGS, ...parsed };
+    }
+  }
+  // Sanitize
+  if (!Number.isFinite(State.settings.biasRadiusMeters) || State.settings.biasRadiusMeters > MAX_RADIUS || State.settings.biasRadiusMeters < 1000) {
+    State.settings.biasRadiusMeters = MAX_RADIUS;
+    saveSettingsLocal();
+  }
+  if (!Number.isFinite(State.settings.biasLat)) State.settings.biasLat = DEFAULT_SETTINGS.biasLat;
+  if (!Number.isFinite(State.settings.biasLng)) State.settings.biasLng = DEFAULT_SETTINGS.biasLng;
+
+  const p = localStorage.getItem(LS.PENDING);
+  if (p) State._pendingSaves = safeJsonParse(p, []) || [];
+}
+
+function saveLeadsLocal() {
+  try { localStorage.setItem(LS.LEADS, JSON.stringify(State.leads)); }
+  catch (e) { console.error('Local save failed:', e); Toast.show('Storage full — please export and clear old data'); }
+}
+function saveSettingsLocal() {
+  try { localStorage.setItem(LS.SETTINGS, JSON.stringify(State.settings)); }
+  catch (e) { console.error('Settings save failed:', e); }
+}
+function savePendingLocal() {
+  try { localStorage.setItem(LS.PENDING, JSON.stringify(State._pendingSaves)); }
+  catch (e) { console.error('Pending save failed:', e); }
+}
+
+// ---- Sheets API ----
+const Sheets = {
+  async _request(opts) {
+    const ctrl = new AbortController();
+    const timeoutId = setTimeout(() => ctrl.abort(), 25000);
+    try {
+      const res = await fetch(opts.url, {
+        method: opts.method || 'GET',
+        redirect: 'follow',
+        headers: opts.headers || {},
+        body: opts.body,
+        signal: ctrl.signal,
+      });
+      clearTimeout(timeoutId);
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`HTTP ${res.status}${text ? ': ' + text.slice(0, 120) : ''}`);
+      }
+      // Apps Script can return HTML on errors (e.g. auth wall)
+      const ct = res.headers.get('Content-Type') || '';
+      const text = await res.text();
+      if (ct.includes('text/html') || text.trim().startsWith('<')) {
+        throw new Error('Got HTML instead of JSON — re-deploy as Anyone-access web app');
+      }
+      const data = JSON.parse(text);
+      return data;
+    } catch (e) {
+      clearTimeout(timeoutId);
+      if (e.name === 'AbortError') throw new Error('Request timed out (25s)');
+      throw e;
+    }
+  },
+  async ping() {
+    if (!State.settings.sheetsUrl) return { ok: false, error: 'No Sheets URL configured' };
+    try {
+      return await this._request({ url: State.settings.sheetsUrl + '?action=ping&t=' + Date.now() });
+    } catch (e) {
+      return { ok: false, error: e.message || String(e) };
+    }
+  },
+  async list() {
+    if (!State.settings.sheetsUrl) throw new Error('No Sheets URL configured');
+    const data = await this._request({ url: State.settings.sheetsUrl + '?action=list&t=' + Date.now() });
+    if (!data.ok) throw new Error(data.error || 'List failed');
+    return data.leads || [];
+  },
+  async save(lead) {
+    if (!State.settings.sheetsUrl) throw new Error('No Sheets URL configured');
+    const data = await this._request({
+      url: State.settings.sheetsUrl,
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'save', lead }),
+    });
+    if (!data.ok) throw new Error(data.error || 'Save failed');
+    return data;
+  },
+  async deleteLead(id) {
+    if (!State.settings.sheetsUrl) throw new Error('No Sheets URL configured');
+    const data = await this._request({
+      url: State.settings.sheetsUrl,
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'delete', id }),
+    });
+    if (!data.ok) throw new Error(data.error || 'Delete failed');
+    return data;
+  },
+};
+
+// ---- Sync ----
+async function syncFromSheets({ silent = false } = {}) {
+  if (!State.settings.sheetsUrl) return;
+  if (State._syncInFlight) return;
+  State._syncInFlight = true;
+  setSync('busy', 'Syncing…');
+  try {
+    await flushPendingSaves(); // best-effort; failures stay in queue
+    const remote = await Sheets.list();
+    // Merge: prefer remote, but keep any locally-newer pending items
+    const remoteById = {};
+    remote.forEach(l => { remoteById[l.id] = l; });
+    const pendingIds = new Set(State._pendingSaves.filter(x => x.action === 'save').map(x => x.lead && x.lead.id));
+    // Keep our local copy for IDs still in the pending queue
+    const merged = State.leads.filter(l => pendingIds.has(l.id) && !remoteById[l.id]);
+    State.leads = [...remote, ...merged];
+    State.leads.sort((a,b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+    saveLeadsLocal();
+    State.syncError = '';
+    setSync('ok', State._pendingSaves.length ? `${State._pendingSaves.length} pending` : 'Synced');
+    if (!silent) Toast.show('Synced from Sheets');
+    if (State.view === 'list') rerenderList();
+  } catch (e) {
+    State.syncError = e.message || String(e);
+    setSync('err', 'Sync failed');
+    if (!silent) Toast.show('Sync failed: ' + State.syncError);
+  } finally {
+    State._syncInFlight = false;
+  }
+}
+
+async function flushPendingSaves() {
+  if (State._pendingSaves.length === 0) return;
+  const queue = State._pendingSaves.slice();
+  const successful = [];
+  for (const item of queue) {
+    try {
+      if (item.action === 'save') await Sheets.save(item.lead);
+      else if (item.action === 'delete') await Sheets.deleteLead(item.id);
+      successful.push(item);
+    } catch (e) {
+      console.error('Pending sync failed for item:', item, e);
+      // Keep in queue, continue with next
+    }
+  }
+  if (successful.length) {
+    State._pendingSaves = State._pendingSaves.filter(x => !successful.includes(x));
+    savePendingLocal();
+  }
+}
+
+async function saveLeadEverywhere(lead) {
+  lead.updatedAt = new Date().toISOString();
+  if (!lead.createdAt) lead.createdAt = lead.updatedAt;
+  const i = State.leads.findIndex(l => l.id === lead.id);
+  if (i >= 0) State.leads[i] = lead; else State.leads.unshift(lead);
+  State.leads.sort((a,b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+  saveLeadsLocal();
+
+  if (!State.settings.sheetsUrl) return { ok: true, queued: false };
+  setSync('busy', 'Saving…');
+  try {
+    await Sheets.save(lead);
+    State.syncError = '';
+    setSync('ok', 'Saved');
+    return { ok: true, queued: false };
+  } catch (e) {
+    State._pendingSaves.push({ action: 'save', lead, ts: Date.now() });
+    savePendingLocal();
+    State.syncError = e.message || String(e);
+    setSync('err', 'Will retry');
+    return { ok: true, queued: true, error: State.syncError };
+  }
+}
+
+async function deleteLeadEverywhere(id) {
+  State.leads = State.leads.filter(l => l.id !== id);
+  saveLeadsLocal();
+  if (!State.settings.sheetsUrl) return { ok: true, queued: false };
+  setSync('busy', 'Deleting…');
+  try {
+    await Sheets.deleteLead(id);
+    State.syncError = '';
+    setSync('ok', 'Deleted');
+    return { ok: true };
+  } catch (e) {
+    State._pendingSaves.push({ action: 'delete', id, ts: Date.now() });
+    savePendingLocal();
+    State.syncError = e.message || String(e);
+    setSync('err', 'Will retry');
+    return { ok: true, queued: true };
+  }
+}
+
+function setSync(status, message) {
+  State.syncStatus = status;
+  State.syncMessage = message || '';
+  // Update indicator in place (no full re-render)
+  const dot = document.querySelector('#sync-indicator-dot');
+  const text = document.querySelector('#sync-indicator-text');
+  if (dot) {
+    dot.classList.remove('ok', 'err', 'busy');
+    if (status === 'ok') dot.classList.add('ok');
+    else if (status === 'err') dot.classList.add('err');
+    else if (status === 'busy') dot.classList.add('busy');
+  }
+  if (text) text.textContent = message;
+}
+
+// ---- Helpers ----
+const uid = () => 'l_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const todayISO = () => {
+  const d = new Date();
+  const tzOffset = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - tzOffset).toISOString().slice(0, 10);
+};
+const escapeHtml = s => (s == null ? '' : String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const escapeAttr = s => escapeHtml(s);
+
+const fmtDate = iso => {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso.length === 10 ? iso + 'T00:00:00' : iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch (e) { return iso; }
+};
+
+const fmtMoney = n => {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return '$0.00';
+  return v.toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 2 });
+};
+
+function newLead() {
+  return {
+    id: uid(),
+    businessName: '', address: '', placeId: null, lat: null, lng: null,
+    googlePhone: '', googleWebsite: '',
+    contacts: [{ name: '', role: '', phone: '', email: '' }],
+    dateGenerated: todayISO(),
+    checklist: CHECKLIST_ITEMS.reduce((a,c) => (a[c.id] = false, a), {}),
+    workNotes: '', bevStage: 'lead_generated', amiableStage: 'not_in_pipeline',
+    accountActive: false, accountActiveDate: '', revenue: 0, commission: 0,
+    serviceNotes: '', createdAt: '', updatedAt: '',
+  };
+}
+
+function ensureLeadShape(lead) {
+  if (!lead.checklist || typeof lead.checklist !== 'object') {
+    lead.checklist = CHECKLIST_ITEMS.reduce((a,c) => (a[c.id] = false, a), {});
+  }
+  CHECKLIST_ITEMS.forEach(c => { if (typeof lead.checklist[c.id] !== 'boolean') lead.checklist[c.id] = !!lead.checklist[c.id]; });
+  if (!Array.isArray(lead.contacts) || lead.contacts.length === 0) {
+    lead.contacts = [{ name: '', role: '', phone: '', email: '' }];
+  }
+  lead.contacts = lead.contacts.map(c => ({
+    name: c && c.name || '', role: c && c.role || '',
+    phone: c && c.phone || '', email: c && c.email || '',
+  }));
+  if (!lead.bevStage) lead.bevStage = 'lead_generated';
+  if (!lead.amiableStage) lead.amiableStage = 'not_in_pipeline';
+  if (typeof lead.accountActive !== 'boolean') lead.accountActive = !!lead.accountActive;
+  if (!Number.isFinite(Number(lead.revenue))) lead.revenue = 0; else lead.revenue = Number(lead.revenue);
+  if (!Number.isFinite(Number(lead.commission))) lead.commission = 0; else lead.commission = Number(lead.commission);
+  return lead;
+}
+
+function filterLeads(leads) {
+  const q = State.searchQuery.trim().toLowerCase();
+  return leads.filter(l => {
+    if (State.filter === 'open' && (l.bevStage === 'active_account' || l.bevStage === 'lost')) return false;
+    if (State.filter === 'active' && l.bevStage !== 'active_account') return false;
+    if (State.filter === 'amiable' && (!l.amiableStage || l.amiableStage === 'not_in_pipeline')) return false;
+    if (State.filter === 'lost' && l.bevStage !== 'lost') return false;
+    if (q) {
+      const hay = [l.businessName, l.address, l.workNotes, l.serviceNotes,
+        ...(l.contacts || []).map(c => (c.name || '') + ' ' + (c.role || '') + ' ' + (c.phone || '') + ' ' + (c.email || ''))
+      ].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+// ---- SVG Icons ----
+const I = {
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>',
+  camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>',
+  refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
+  excel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+  pdf: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>',
+  sheets: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+};
+
+// ---- Toast ----
+const Toast = {
+  show(msg) {
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => { if (el.parentNode) el.remove(); }, 2400);
+  }
+};
+
+// ---- Loading overlay ----
+const Loading = {
+  _count: 0,
+  show(text) {
+    this._count++;
+    let el = document.getElementById('loading-overlay');
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'loading-overlay';
+      el.id = 'loading-overlay';
+      document.body.appendChild(el);
+    }
+    el.innerHTML = `<div class="spinner"></div><div style="font-size:14px;color:var(--text-muted);">${escapeHtml(text || 'Working…')}</div>`;
+  },
+  hide() {
+    this._count = Math.max(0, this._count - 1);
+    if (this._count > 0) return;
+    const el = document.getElementById('loading-overlay');
+    if (el) el.remove();
+  },
+  hideAll() { this._count = 0; const el = document.getElementById('loading-overlay'); if (el) el.remove(); }
+};
+
+// ---- Modal ----
+const Modal = {
+  confirm({ title, message, yesLabel = 'Confirm', danger = false, onYes }) {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `
+      <div class="modal">
+        <h3>${escapeHtml(title)}</h3>
+        <p>${escapeHtml(message)}</p>
+        <div class="modal-actions">
+          <button class="btn-secondary" data-cancel>Cancel</button>
+          <button class="${danger ? 'btn-danger' : 'btn-primary'}" data-yes>${escapeHtml(yesLabel)}</button>
+        </div>
+      </div>`;
+    const close = () => { if (backdrop.parentNode) backdrop.remove(); };
+    backdrop.addEventListener('click', e => { if (e.target === backdrop) close(); });
+    document.body.appendChild(backdrop);
+    backdrop.querySelector('[data-cancel]').onclick = close;
+    backdrop.querySelector('[data-yes]').onclick = async () => { close(); await onYes(); };
+  },
+  alert({ title, message }) {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `
+      <div class="modal">
+        <h3>${escapeHtml(title)}</h3>
+        <p>${escapeHtml(message)}</p>
+        <div class="modal-actions"><button class="btn-primary" data-ok>OK</button></div>
+      </div>`;
+    const close = () => { if (backdrop.parentNode) backdrop.remove(); };
+    backdrop.addEventListener('click', e => { if (e.target === backdrop) close(); });
+    document.body.appendChild(backdrop);
+    backdrop.querySelector('[data-ok]').onclick = close;
+  }
+};
+
+// ---- Google Places ----
+let _gmapsPromise = null;
+let _gmapsKeyChanged = false;
+function ensureGoogleMaps() {
+  if (_gmapsKeyChanged && window.google && window.google.maps) {
+    return Promise.reject(new Error('API key changed — please close and reopen the app for the new key to take effect.'));
+  }
+  if (_gmapsPromise) return _gmapsPromise;
+  if (window.google && window.google.maps && window.google.maps.places) {
+    _gmapsPromise = Promise.resolve();
+    return _gmapsPromise;
+  }
+  _gmapsPromise = new Promise((resolve, reject) => {
+    const key = State.settings.googleApiKey;
+    if (!key) { _gmapsPromise = null; return reject(new Error('No Google API key')); }
+    const cbName = '_gmInit' + Date.now() + Math.floor(Math.random() * 1000);
+    let timer = null;
+    window[cbName] = () => {
+      try { delete window[cbName]; } catch(e) {}
+      if (timer) clearTimeout(timer);
+      resolve();
+    };
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places&v=weekly&callback=${cbName}&loading=async`;
+    script.async = true; script.defer = true;
+    script.onerror = () => {
+      if (timer) clearTimeout(timer);
+      _gmapsPromise = null;
+      try { delete window[cbName]; } catch(e) {}
+      reject(new Error('Failed to load Google Maps script'));
+    };
+    document.head.appendChild(script);
+    timer = setTimeout(() => {
+      if (_gmapsPromise) {
+        _gmapsPromise = null;
+        try { delete window[cbName]; } catch(e) {}
+        reject(new Error('Google Maps load timed out'));
+      }
+    }, 15000);
+  });
+  return _gmapsPromise;
+}
+
+const Places = {
+  lastError: null,
+  async autocomplete(input) {
+    this.lastError = null;
+    if (!State.settings.googleApiKey || !input || input.length < 2) return [];
+    try {
+      await ensureGoogleMaps();
+      if (!State._sessionToken && google.maps.places.AutocompleteSessionToken) {
+        State._sessionToken = new google.maps.places.AutocompleteSessionToken();
+      }
+      const radius = Math.min(MAX_RADIUS, State.settings.biasRadiusMeters || MAX_RADIUS);
+      const locationBias = {
+        center: { lat: State.settings.biasLat, lng: State.settings.biasLng },
+        radius,
+      };
+      if (google.maps.places.AutocompleteSuggestion && google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions) {
+        const { suggestions } = await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+          input,
+          sessionToken: State._sessionToken,
+          locationBias,
+          region: 'ca',
+          includedPrimaryTypes: ['establishment'],
+        });
+        return (suggestions || []).map(s => {
+          const p = s.placePrediction;
+          if (!p) return null;
+          const getText = obj => obj ? (typeof obj === 'string' ? obj : (obj.text || obj.toString() || '')) : '';
+          return {
+            placeId: p.placeId,
+            mainText: getText(p.mainText) || getText(p.text),
+            secondaryText: getText(p.secondaryText),
+          };
+        }).filter(r => r && r.placeId);
+      }
+      if (google.maps.places.AutocompleteService) {
+        const svc = new google.maps.places.AutocompleteService();
+        return await new Promise(resolve => {
+          svc.getPlacePredictions({
+            input, sessionToken: State._sessionToken,
+            locationBias,
+            types: ['establishment'], componentRestrictions: { country: 'ca' },
+          }, (predictions, status) => {
+            if (status !== 'OK' || !predictions) { Places.lastError = 'Status: ' + status; return resolve([]); }
+            resolve(predictions.map(p => ({
+              placeId: p.place_id,
+              mainText: (p.structured_formatting && p.structured_formatting.main_text) || p.description || '',
+              secondaryText: (p.structured_formatting && p.structured_formatting.secondary_text) || '',
+            })));
+          });
+        });
+      }
+      this.lastError = 'Places library unavailable';
+      return [];
+    } catch (e) {
+      this.lastError = e.message || String(e);
+      return [];
+    }
+  },
+  async details(placeId) {
+    this.lastError = null;
+    if (!State.settings.googleApiKey || !placeId) return null;
+    try {
+      await ensureGoogleMaps();
+      if (google.maps.places.Place) {
+        const place = new google.maps.places.Place({ id: placeId, requestedLanguage: 'en' });
+        await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location', 'nationalPhoneNumber', 'internationalPhoneNumber', 'websiteURI'] });
+        State._sessionToken = null; // session ends after details
+        return {
+          id: placeId,
+          displayName: place.displayName || '',
+          formattedAddress: place.formattedAddress || '',
+          location: place.location ? { latitude: place.location.lat(), longitude: place.location.lng() } : null,
+          nationalPhoneNumber: place.nationalPhoneNumber || place.internationalPhoneNumber || '',
+          websiteUri: place.websiteURI || '',
+        };
+      }
+      if (google.maps.places.PlacesService) {
+        const svc = new google.maps.places.PlacesService(document.createElement('div'));
+        return await new Promise(resolve => {
+          svc.getDetails({
+            placeId,
+            fields: ['name', 'formatted_address', 'geometry', 'formatted_phone_number', 'international_phone_number', 'website'],
+            sessionToken: State._sessionToken,
+          }, (res, status) => {
+            State._sessionToken = null;
+            if (status !== 'OK' || !res) { Places.lastError = 'Status: ' + status; return resolve(null); }
+            resolve({
+              id: placeId,
+              displayName: res.name || '',
+              formattedAddress: res.formatted_address || '',
+              location: res.geometry && res.geometry.location ? { latitude: res.geometry.location.lat(), longitude: res.geometry.location.lng() } : null,
+              nationalPhoneNumber: res.formatted_phone_number || res.international_phone_number || '',
+              websiteUri: res.website || '',
+            });
+          });
+        });
+      }
+      return null;
+    } catch (e) {
+      this.lastError = e.message || String(e);
+      return null;
+    }
+  },
+  async test() {
+    if (!State.settings.googleApiKey) return { ok: false, error: 'No API key' };
+    try {
+      await ensureGoogleMaps();
+      State._sessionToken = null; // fresh session for test
+      const r = await this.autocomplete('coffee');
+      if (this.lastError) return { ok: false, error: this.lastError };
+      return { ok: true, count: r.length };
+    } catch (e) {
+      return { ok: false, error: e.message || String(e) };
+    }
+  },
+};
+
+// ============================================================
+// RENDER
+// ============================================================
+
+let _lastRenderedView = null;
+function render() {
+  const content = document.getElementById('app-content');
+  const viewChanged = State.view !== _lastRenderedView;
+  // Capture scroll position only for same-view re-renders
+  let savedScrollTop = 0;
+  if (!viewChanged) {
+    const m = content.querySelector('.main');
+    if (m) savedScrollTop = m.scrollTop;
+  }
+
+  if (State.view === 'editor') {
+    if (!State._editingDraft) { State.view = 'list'; _lastRenderedView = null; return render(); }
+    content.innerHTML = renderEditor(State._editingDraft);
+    attachEditorListeners();
+  } else if (State.view === 'export') {
+    content.innerHTML = renderExportView();
+  } else if (State.view === 'settings') {
+    content.innerHTML = renderSettings();
+    attachSettingsListeners();
+  } else {
+    content.innerHTML = renderList();
+    attachListListeners();
+  }
+  updateTabs();
+
+  // Restore scroll
+  const newMain = content.querySelector('.main');
+  if (newMain) {
+    if (!viewChanged && savedScrollTop > 0) newMain.scrollTop = savedScrollTop;
+    else newMain.scrollTop = 0;
+  }
+  _lastRenderedView = State.view;
+}
+
+function updateTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    const tab = t.dataset.tab;
+    const active = (tab === 'list' && (State.view === 'list' || State.view === 'editor')) || tab === State.view;
+    t.classList.toggle('active', active);
+  });
+}
+
+// ---- LIST VIEW ----
+function renderList() {
+  const filtered = filterLeads(State.leads);
+  const dotClass = State.syncStatus === 'ok' ? 'ok' : State.syncStatus === 'err' ? 'err' : State.syncStatus === 'busy' ? 'busy' : '';
+  const syncText = State.syncMessage || (State.settings.sheetsUrl ? 'Connected' : 'Local only');
+  const pending = State._pendingSaves.length;
+
+  return `
+    <header class="app-header">
+      <div style="min-width:0;flex:1;">
+        <div class="app-title">Bev Co Lead Tracker<span class="dot">.</span></div>
+        <div class="sync-indicator" id="sync-indicator" data-action="show-sync-info">
+          <div class="sync-dot ${dotClass}" id="sync-indicator-dot"></div>
+          <span id="sync-indicator-text">${escapeHtml(syncText)}</span>
+          ${pending > 0 ? `<span style="color:var(--amber);">· ${pending} pending</span>` : ''}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button class="icon-btn" data-action="sync-now" aria-label="Refresh">${I.refresh}</button>
+        <button class="icon-btn primary" data-action="new-lead" aria-label="New lead">${I.plus}</button>
+      </div>
+    </header>
+    <main class="main" id="list-main">
+      ${!State.settings.sheetsUrl ? `
+        <div class="setup-card">
+          <h3>Set up Google Sheets sync</h3>
+          <p>Your data isn't syncing yet. Add your Apps Script URL in Settings to sync leads with Google Sheets across all devices.</p>
+          <button data-action="go-settings">Go to Settings →</button>
+        </div>
+      ` : ''}
+      ${State.syncStatus === 'err' && State.syncError ? `
+        <div class="error-banner">
+          <span>⚠ ${escapeHtml(State.syncError)}</span>
+          <button data-action="sync-now">Retry</button>
+        </div>
+      ` : ''}
+      <div class="list-header">
+        <h2>Leads</h2>
+        <span class="count">${filtered.length} of ${State.leads.length}</span>
+      </div>
+      <div class="search-bar">
+        <input type="text" class="search-input" id="search-input" placeholder="Search business, contact, notes…"
+          value="${escapeAttr(State.searchQuery)}"
+          enterkeyhint="search"
+          autocomplete="off" autocorrect="off" autocapitalize="off">
+      </div>
+      <div class="filter-chips">
+        ${FILTERS.map(f => `<button class="chip ${State.filter === f.id ? 'active' : ''}" data-filter="${f.id}">${escapeHtml(f.label)}</button>`).join('')}
+      </div>
+      <div class="leads-list" id="leads-list">
+        ${filtered.length === 0 ? renderEmpty() : filtered.map(renderLeadCard).join('')}
+      </div>
+    </main>
+    <button class="fab" data-action="new-lead" aria-label="Add lead">${I.plus}</button>
+  `;
+}
+
+function renderEmpty() {
+  if (State.leads.length === 0) {
+    return `<div class="empty-state"><h3>No leads yet</h3><p>Tap the + button to add your first lead.</p></div>`;
+  }
+  return `<div class="empty-state"><h3>No matches</h3><p>Try clearing your search or filter.</p></div>`;
+}
+
+function renderLeadCard(l) {
+  const primary = (l.contacts && l.contacts[0]) || {};
+  const amiable = l.amiableStage && l.amiableStage !== 'not_in_pipeline';
+  return `
+    <div class="lead-card" data-lead-id="${escapeAttr(l.id)}">
+      <div class="lead-card-top">
+        <div class="lead-name">${escapeHtml(l.businessName || 'Unnamed lead')}</div>
+        <span class="badge badge-stage-${escapeAttr(l.bevStage)}">${escapeHtml(BEV_STAGE_LABEL(l.bevStage))}</span>
+      </div>
+      ${l.address ? `<div class="lead-address">${escapeHtml(l.address)}</div>` : ''}
+      <div class="lead-meta">
+        ${primary.name ? `<span>${escapeHtml(primary.name)}${primary.role ? ' (' + escapeHtml(primary.role) + ')' : ''}</span><span class="sep"></span>` : ''}
+        <span>${fmtDate(l.dateGenerated)}</span>
+        ${amiable ? `<span class="sep"></span><span class="badge badge-amiable">Amiable</span>` : ''}
+      </div>
+    </div>`;
+}
+
+function rerenderList() {
+  if (State.view !== 'list') return;
+  const list = document.getElementById('leads-list');
+  if (!list) { render(); return; }
+  const filtered = filterLeads(State.leads);
+  list.innerHTML = filtered.length === 0 ? renderEmpty() : filtered.map(renderLeadCard).join('');
+  const count = document.querySelector('.list-header .count');
+  if (count) count.textContent = `${filtered.length} of ${State.leads.length}`;
+}
+
+function attachListListeners() {
+  // NOTE: Click handlers are centralized in setupGlobalClickHandler() to prevent stale listener accumulation.
+  // This function now only wires up view-specific INPUT handlers (which die with their elements on re-render).
+  const search = document.getElementById('search-input');
+  if (search) {
+    search.addEventListener('input', () => {
+      State.searchQuery = search.value;
+      rerenderList();
+    });
+  }
+}
+
+function showSyncInfo() {
+  if (!State.settings.sheetsUrl) {
+    Modal.confirm({
+      title: 'Sheets not configured',
+      message: 'Connect your Google Sheet in Settings to enable cross-device sync.',
+      yesLabel: 'Go to Settings',
+      onYes: () => { State.view = 'settings'; render(); }
+    });
+    return;
+  }
+  const lines = [];
+  lines.push(`Status: ${State.syncStatus === 'ok' ? 'Connected' : State.syncStatus === 'busy' ? 'Working' : State.syncStatus === 'err' ? 'Error' : 'Idle'}`);
+  if (State.syncMessage) lines.push(State.syncMessage);
+  if (State._pendingSaves.length) lines.push(`${State._pendingSaves.length} unsynced changes`);
+  if (State.syncError) lines.push(`Last error: ${State.syncError}`);
+  Modal.confirm({
+    title: 'Sync status',
+    message: lines.join('\n'),
+    yesLabel: 'Sync now',
+    onYes: () => syncFromSheets()
+  });
+}
+
+// ---- EDITOR VIEW ----
+function renderEditor(lead) {
+  const isNew = !State.leads.find(l => l.id === lead.id);
+  const hasGoogle = !!State.settings.googleApiKey;
+
+  return `
+    <header class="detail-header">
+      <button class="back-btn" data-action="back">${I.back}<span>Leads</span></button>
+      <div class="detail-header-actions">
+        ${!isNew ? `<button class="icon-btn" data-action="delete" aria-label="Delete">${I.trash}</button>` : ''}
+      </div>
+    </header>
+    <main class="main with-savebar" id="editor-main">
+      <div class="detail-body">
+
+        <div class="form-section">
+          <div class="form-section-title">Business</div>
+          <div class="quick-actions">
+            ${hasGoogle ? `<button class="quick-action-btn" data-action="focus-biz">${I.search}<span>Find on Google</span></button>` : ''}
+            <button class="quick-action-btn" data-action="scan-card">${I.camera}<span>Scan card</span></button>
+            <input type="file" id="card-scan-input" accept="image/*" capture="environment" style="display:none">
+          </div>
+          ${!hasGoogle ? `<div class="settings-help" style="margin-bottom:12px;">Add a Google API key in Settings to enable business autocomplete.</div>` : ''}
+          <div class="field">
+            <label>Business Name</label>
+            <div class="autocomplete-wrap">
+              <input type="text" id="biz-name-input" value="${escapeAttr(lead.businessName)}"
+                placeholder="${hasGoogle ? 'Start typing — auto-fill from Google' : 'e.g. Vogue Cafe'}"
+                autocomplete="off" autocorrect="off" autocapitalize="words" enterkeyhint="done"
+                data-field="businessName">
+              <div id="biz-suggestions"></div>
+            </div>
+            <div id="biz-search-status" style="font-size:12px;margin-top:6px;min-height:16px;"></div>
+          </div>
+          <div class="field">
+            <label>Address</label>
+            <input type="text" id="address-input" value="${escapeAttr(lead.address)}" placeholder="Street, city, postal code"
+              autocomplete="off" autocapitalize="words" enterkeyhint="done"
+              data-field="address">
+            ${lead.address ? `
+              <div style="margin-top:6px;display:flex;gap:14px;font-size:13px;flex-wrap:wrap;">
+                <a class="pretty-link" href="${escapeAttr(mapsLink(lead))}" target="_blank" rel="noopener">📍 Open in Google Maps</a>
+                ${lead.googlePhone ? `<a class="pretty-link" href="tel:${escapeAttr(lead.googlePhone)}">📞 ${escapeHtml(lead.googlePhone)}</a>` : ''}
+                ${lead.googleWebsite ? `<a class="pretty-link" href="${escapeAttr(lead.googleWebsite)}" target="_blank" rel="noopener">🌐 Website</a>` : ''}
+              </div>
+            ` : ''}
+          </div>
+          <div class="field">
+            <label>Date Lead Generated</label>
+            <input type="date" value="${escapeAttr(lead.dateGenerated)}" data-field="dateGenerated">
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Contacts</div>
+          <div id="contacts-list">${lead.contacts.map((c, i) => renderContactBlock(c, i)).join('')}</div>
+          <button class="add-btn" data-action="add-contact">${I.plus}<span>Add contact</span></button>
+        </div>
+
+        <div class="form-section checklist-section">
+          <div class="form-section-title" style="display:flex;align-items:center;gap:8px;color:var(--blue);">
+            <span>✓</span><span>Pre-Handoff Checklist</span>
+          </div>
+          <div class="checklist">
+            ${CHECKLIST_ITEMS.map(item => `
+              <div class="checklist-item ${lead.checklist[item.id] ? 'checked' : ''}" data-checklist="${escapeAttr(item.id)}">
+                <div class="checkbox">${I.check}</div>
+                <span>${escapeHtml(item.label)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="row-sb" style="margin-bottom:12px;">
+            <div class="form-section-title" style="margin:0;">Work Notes (pre-handoff)</div>
+            <button class="dictate-inline" id="dictate-work" data-dictate="work-notes">${I.mic}<span>Dictate</span></button>
+          </div>
+          <textarea id="work-notes" placeholder="What you did, what they said, samples dropped, follow-up notes…"
+            data-field="workNotes"
+            style="width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);min-height:90px;resize:vertical;font-family:inherit;font-size:16px;">${escapeHtml(lead.workNotes)}</textarea>
+          <div class="settings-help">Tip: Tap the microphone on your iOS keyboard for native dictation too.</div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Pipeline Status</div>
+          <div class="field">
+            <label>Bev Co Stage</label>
+            <select id="bev-stage-select" data-field="bevStage">
+              ${BEV_STAGES.map(s => `<option value="${escapeAttr(s.id)}" ${lead.bevStage === s.id ? 'selected' : ''}>${escapeHtml(s.label)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label>Amiable Pipeline Status</label>
+            <select data-field="amiableStage">
+              ${AMIABLE_STAGES.map(s => `<option value="${escapeAttr(s.id)}" ${lead.amiableStage === s.id ? 'selected' : ''}>${escapeHtml(s.label)}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Account &amp; Revenue (Bev Co)</div>
+          <div class="toggle-row" style="margin-bottom:8px;">
+            <span style="font-size:14px;">Account is active</span>
+            <div class="toggle ${lead.accountActive ? 'on' : ''}" data-action="toggle-active"></div>
+          </div>
+          <div id="active-date-wrap" style="${lead.accountActive ? '' : 'display:none;'}">
+            <div class="field">
+              <label>Date Account Became Active</label>
+              <input type="date" value="${escapeAttr(lead.accountActiveDate || todayISO())}" data-field="accountActiveDate">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Revenue Generated (CAD)</label>
+              <input type="number" inputmode="decimal" min="0" step="0.01" value="${lead.revenue || ''}" placeholder="0.00" data-field="revenue" data-numeric>
+            </div>
+            <div class="field">
+              <label>Your Commission (CAD)</label>
+              <input type="number" inputmode="decimal" min="0" step="0.01" value="${lead.commission || ''}" placeholder="0.00" data-field="commission" data-numeric>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="row-sb" style="margin-bottom:12px;">
+            <div class="form-section-title" style="margin:0;">Ways I'm Serving Them</div>
+            <button class="dictate-inline" id="dictate-service" data-dictate="service-notes">${I.mic}<span>Dictate</span></button>
+          </div>
+          <textarea id="service-notes" placeholder="Beyond the sale: prayer, intros, advice, encouragement…"
+            data-field="serviceNotes"
+            style="width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);min-height:90px;resize:vertical;font-family:inherit;font-size:16px;">${escapeHtml(lead.serviceNotes)}</textarea>
+        </div>
+
+        <div style="padding: 4px 4px 24px; font-size: 12px; color: var(--text-light);">
+          ${lead.createdAt ? `Created ${fmtDate(lead.createdAt)} · ` : ''}${lead.updatedAt ? 'Updated ' + fmtDate(lead.updatedAt) : ''}
+        </div>
+      </div>
+    </main>
+    <div class="save-bar">
+      <button class="btn-secondary" data-action="back">Cancel</button>
+      <button class="btn-primary" data-action="save" id="save-btn">Save</button>
+    </div>
+  `;
+}
+
+function renderContactBlock(c, i) {
+  return `
+    <div class="contact-block" data-contact-index="${i}">
+      <div class="contact-block-header">
+        <span class="contact-block-title">Contact ${i + 1}</span>
+        ${i > 0 ? `<button class="remove-btn" data-action="remove-contact" data-index="${i}">Remove</button>` : ''}
+      </div>
+      <input type="text" class="contact-input" value="${escapeAttr(c.name)}" placeholder="Full name"
+        autocomplete="name" autocapitalize="words" enterkeyhint="next"
+        data-contact="name" data-index="${i}"
+        style="margin-bottom:10px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <input type="text" class="contact-input" value="${escapeAttr(c.role)}" placeholder="Role"
+          autocapitalize="words" enterkeyhint="next"
+          data-contact="role" data-index="${i}">
+        <input type="tel" class="contact-input" value="${escapeAttr(c.phone)}" placeholder="Phone"
+          autocomplete="tel" enterkeyhint="next"
+          data-contact="phone" data-index="${i}">
+      </div>
+      <input type="email" class="contact-input" value="${escapeAttr(c.email)}" placeholder="Email"
+        autocomplete="email" autocapitalize="off" autocorrect="off" enterkeyhint="done"
+        data-contact="email" data-index="${i}">
+    </div>`;
+}
+
+function attachEditorListeners() {
+  const main = document.getElementById('editor-main');
+  if (!main) return;
+
+  // Field inputs (delegated)
+  document.querySelectorAll('[data-field]').forEach(el => {
+    const field = el.dataset.field;
+    const isNumeric = el.hasAttribute('data-numeric');
+    const handler = () => {
+      const draft = State._editingDraft;
+      if (!draft) return;
+      let v = el.value;
+      if (isNumeric) v = v === '' ? 0 : (parseFloat(v) || 0);
+      draft[field] = v;
+      State._dirty = true;
+    };
+    el.addEventListener('input', handler);
+    if (el.tagName === 'SELECT' || el.type === 'date') el.addEventListener('change', handler);
+  });
+
+  // Contact inputs
+  document.querySelectorAll('[data-contact]').forEach(el => {
+    const field = el.dataset.contact;
+    const idx = parseInt(el.dataset.index, 10);
+    el.addEventListener('input', () => {
+      const draft = State._editingDraft;
+      if (!draft || !draft.contacts[idx]) return;
+      draft.contacts[idx][field] = el.value;
+      State._dirty = true;
+    });
+  });
+
+  // Click delegation for actions
+  document.getElementById('app-content').addEventListener('click', editorClickHandler);
+
+  // Checklist toggles (delegated, in-place update)
+  main.addEventListener('click', e => {
+    const item = e.target.closest('[data-checklist]');
+    if (item) {
+      const id = item.dataset.checklist;
+      const draft = State._editingDraft;
+      if (!draft) return;
+      if (!draft.checklist) draft.checklist = {};
+      draft.checklist[id] = !draft.checklist[id];
+      item.classList.toggle('checked', draft.checklist[id]);
+      State._dirty = true;
+      return;
+    }
+    const toggle = e.target.closest('[data-action="toggle-active"]');
+    if (toggle) handleToggleActive();
+  });
+
+  // Business search
+  const bizInput = document.getElementById('biz-name-input');
+  if (bizInput) {
+    bizInput.addEventListener('input', () => handleBizSearch(bizInput.value));
+    bizInput.addEventListener('blur', () => {
+      // Delay so suggestion clicks can register
+      setTimeout(() => {
+        const box = document.getElementById('biz-suggestions');
+        if (box) box.innerHTML = '';
+      }, 200);
+    });
+  }
+
+  // Dictation buttons
+  document.querySelectorAll('[data-dictate]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const taId = btn.dataset.dictate;
+      toggleDictation(taId, btn.id);
+    });
+  });
+
+  // Card scan
+  const cardInput = document.getElementById('card-scan-input');
+  if (cardInput) cardInput.addEventListener('change', handleCardScan);
+}
+
+// Single click handler bound per editor render — uses event delegation
+function editorClickHandler(e) {
+  // Only process clicks that originated inside the editor
+  if (!document.getElementById('editor-main')) return;
+  const target = e.target.closest('[data-action]');
+  if (!target) return;
+  const action = target.dataset.action;
+
+  if (action === 'back') { goBack(); return; }
+  if (action === 'save') { saveAndExit(); return; }
+  if (action === 'delete') { confirmDeleteCurrent(); return; }
+  if (action === 'focus-biz') {
+    const bi = document.getElementById('biz-name-input');
+    if (bi) bi.focus();
+    return;
+  }
+  if (action === 'scan-card') {
+    const ci = document.getElementById('card-scan-input');
+    if (ci) ci.click();
+    return;
+  }
+  if (action === 'add-contact') {
+    const draft = State._editingDraft;
+    if (!draft) return;
+    draft.contacts.push({ name: '', role: '', phone: '', email: '' });
+    State._dirty = true;
+    // Re-render only the contacts section
+    const list = document.getElementById('contacts-list');
+    if (list) {
+      list.innerHTML = draft.contacts.map((c, i) => renderContactBlock(c, i)).join('');
+      // Re-bind contact input listeners for the new blocks
+      list.querySelectorAll('[data-contact]').forEach(el => {
+        const field = el.dataset.contact;
+        const idx = parseInt(el.dataset.index, 10);
+        el.addEventListener('input', () => {
+          if (!draft.contacts[idx]) return;
+          draft.contacts[idx][field] = el.value;
+          State._dirty = true;
+        });
+      });
+    }
+    return;
+  }
+  if (action === 'remove-contact') {
+    const idx = parseInt(target.dataset.index, 10);
+    const draft = State._editingDraft;
+    if (!draft) return;
+    draft.contacts.splice(idx, 1);
+    if (draft.contacts.length === 0) draft.contacts = [{ name: '', role: '', phone: '', email: '' }];
+    State._dirty = true;
+    // Re-render contacts section
+    const list = document.getElementById('contacts-list');
+    if (list) {
+      list.innerHTML = draft.contacts.map((c, i) => renderContactBlock(c, i)).join('');
+      list.querySelectorAll('[data-contact]').forEach(el => {
+        const field = el.dataset.contact;
+        const i = parseInt(el.dataset.index, 10);
+        el.addEventListener('input', () => {
+          if (!draft.contacts[i]) return;
+          draft.contacts[i][field] = el.value;
+          State._dirty = true;
+        });
+      });
+    }
+    return;
+  }
+}
+
+function handleToggleActive() {
+  const draft = State._editingDraft;
+  if (!draft) return;
+  draft.accountActive = !draft.accountActive;
+  if (draft.accountActive && !draft.accountActiveDate) draft.accountActiveDate = todayISO();
+  if (draft.accountActive && draft.bevStage !== 'active_account') {
+    draft.bevStage = 'active_account';
+    const sel = document.getElementById('bev-stage-select');
+    if (sel) sel.value = 'active_account';
+  }
+  State._dirty = true;
+  // In-place updates
+  document.querySelectorAll('[data-action="toggle-active"]').forEach(el => el.classList.toggle('on', draft.accountActive));
+  const wrap = document.getElementById('active-date-wrap');
+  if (wrap) wrap.style.display = draft.accountActive ? '' : 'none';
+}
+
+// ---- Business search & place picker ----
+let bizSearchTimer = null;
+let bizSearchSeq = 0;
+const _suggestionCache = {};
+
+function handleBizSearch(value) {
+  const draft = State._editingDraft;
+  if (draft) { draft.businessName = value; State._dirty = true; }
+  const box = document.getElementById('biz-suggestions');
+  const status = document.getElementById('biz-search-status');
+  if (!box) return;
+  clearTimeout(bizSearchTimer);
+  const mySeq = ++bizSearchSeq;
+  if (!value || value.trim().length < 2) {
+    box.innerHTML = '';
+    if (status) status.textContent = '';
+    return;
+  }
+  if (!State.settings.googleApiKey) {
+    box.innerHTML = '';
+    if (status) status.innerHTML = '<span style="color:var(--text-light);">Add a Google API key in Settings for autocomplete.</span>';
+    return;
+  }
+  if (status) status.innerHTML = '<span class="spinner" style="vertical-align:middle;width:12px;height:12px;border-width:1.5px;"></span> <span style="color:var(--text-muted);">Searching…</span>';
+  bizSearchTimer = setTimeout(async () => {
+    const results = await Places.autocomplete(value);
+    // Discard out-of-order responses
+    if (mySeq !== bizSearchSeq) return;
+    if (!document.getElementById('biz-suggestions')) return; // view changed
+    if (Places.lastError) {
+      box.innerHTML = '';
+      if (status) status.innerHTML = `<span style="color:var(--red);">⚠ ${escapeHtml(Places.lastError)}</span>`;
+      return;
+    }
+    if (status) status.textContent = '';
+    if (results.length === 0) { box.innerHTML = ''; return; }
+    box.innerHTML = `<div class="autocomplete-list">` + results.slice(0, 6).map(r => {
+      _suggestionCache[r.placeId] = { mainText: r.mainText, secondaryText: r.secondaryText };
+      return `<div class="autocomplete-item" data-place-id="${escapeAttr(r.placeId)}">
+        <div class="autocomplete-main">${escapeHtml(r.mainText)}</div>
+        <div class="autocomplete-secondary">${escapeHtml(r.secondaryText)}</div>
+      </div>`;
+    }).join('') + `</div>`;
+    box.querySelectorAll('.autocomplete-item').forEach(item => {
+      // Use mousedown not click — fires before blur, so the suggestion click registers
+      item.addEventListener('mousedown', ev => { ev.preventDefault(); pickPlace(item.dataset.placeId); });
+      item.addEventListener('touchstart', ev => { /* allow */ }, { passive: true });
+      item.addEventListener('click', () => pickPlace(item.dataset.placeId));
+    });
+  }, 280);
+}
+
+async function pickPlace(placeId) {
+  const draft = State._editingDraft;
+  if (!draft) return;
+  const cached = _suggestionCache[placeId] || {};
+  const box = document.getElementById('biz-suggestions');
+  const status = document.getElementById('biz-search-status');
+  if (box) box.innerHTML = '';
+  if (status) status.textContent = '';
+  Loading.show('Fetching details…');
+  const details = await Places.details(placeId);
+  Loading.hide();
+  if (!details) {
+    draft.businessName = cached.mainText || draft.businessName;
+    draft.address = cached.secondaryText || draft.address;
+    State._dirty = true;
+    render();
+    Toast.show(Places.lastError ? 'Details: ' + Places.lastError : 'Details unavailable');
+    return;
+  }
+  draft.placeId = details.id || placeId;
+  draft.businessName = details.displayName || cached.mainText || draft.businessName;
+  draft.address = details.formattedAddress || cached.secondaryText || '';
+  if (details.location) {
+    draft.lat = details.location.latitude;
+    draft.lng = details.location.longitude;
+  }
+  draft.googlePhone = details.nationalPhoneNumber || '';
+  draft.googleWebsite = details.websiteUri || '';
+  State._dirty = true;
+  // Dismiss keyboard
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  Toast.show('Auto-filled from Google');
+  render();
+}
+
+function mapsLink(lead) {
+  if (lead.lat && lead.lng) {
+    return `https://www.google.com/maps/search/?api=1&query=${lead.lat},${lead.lng}${lead.placeId ? '&query_place_id=' + lead.placeId : ''}`;
+  }
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.address || lead.businessName || '')}`;
+}
+
+// ---- Editor lifecycle ----
+function openEditor(id) {
+  if (id) {
+    const existing = State.leads.find(l => l.id === id);
+    if (existing) {
+      State._editingDraft = ensureLeadShape(JSON.parse(JSON.stringify(existing)));
+      State._editingOriginal = JSON.parse(JSON.stringify(State._editingDraft));
+    } else {
+      State._editingDraft = newLead();
+      State._editingOriginal = null;
+    }
+  } else {
+    State._editingDraft = newLead();
+    State._editingOriginal = null;
+  }
+  State._dirty = false;
+  State.view = 'editor';
+  render();
+}
+
+async function saveAndExit() {
+  const draft = State._editingDraft;
+  if (!draft) return goBack();
+  const btn = document.getElementById('save-btn');
+  if (btn) btn.disabled = true;
+  Loading.show('Saving…');
+  const result = await saveLeadEverywhere(draft);
+  Loading.hide();
+  State._editingDraft = null;
+  State._editingOriginal = null;
+  State._dirty = false;
+  State.view = 'list';
+  if (result.queued) Toast.show('Saved locally — will sync when reconnected');
+  else Toast.show('Saved');
+  render();
+}
+
+function goBack() {
+  if (State._dirty) {
+    Modal.confirm({
+      title: 'Discard changes?',
+      message: 'You have unsaved changes. Discard them?',
+      yesLabel: 'Discard',
+      danger: true,
+      onYes: () => {
+        State._editingDraft = null;
+        State._editingOriginal = null;
+        State._dirty = false;
+        State.view = 'list';
+        render();
+      }
+    });
+    return;
+  }
+  State._editingDraft = null;
+  State._editingOriginal = null;
+  State.view = 'list';
+  render();
+}
+
+function confirmDeleteCurrent() {
+  const draft = State._editingDraft;
+  if (!draft) return;
+  Modal.confirm({
+    title: 'Delete lead?',
+    message: 'This cannot be undone.',
+    yesLabel: 'Delete',
+    danger: true,
+    onYes: async () => {
+      Loading.show('Deleting…');
+      await deleteLeadEverywhere(draft.id);
+      Loading.hide();
+      State._editingDraft = null;
+      State._editingOriginal = null;
+      State._dirty = false;
+      State.view = 'list';
+      Toast.show('Deleted');
+      render();
+    }
+  });
+}
+
+// ---- Dictation ----
+let activeRecognition = null;
+function toggleDictation(textareaId, btnId) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById(btnId);
+  if (!SR) {
+    if (btn) btn.classList.add('unsupported');
+    Toast.show('In-app dictation unavailable on this browser — use the iOS keyboard mic instead');
+    return;
+  }
+  if (activeRecognition) {
+    try { activeRecognition.stop(); } catch (e) {}
+    return;
+  }
+  const ta = document.getElementById(textareaId);
+  if (!ta || !btn) return;
+
+  const recognition = new SR();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'en-CA';
+  let finalTranscript = ta.value;
+  if (finalTranscript && !/[\s\n]$/.test(finalTranscript)) finalTranscript += ' ';
+
+  recognition.onresult = (e) => {
+    let interim = '';
+    let finals = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const txt = e.results[i][0].transcript;
+      if (e.results[i].isFinal) finals += txt + ' '; else interim += txt;
+    }
+    finalTranscript += finals;
+    ta.value = finalTranscript + interim;
+    // Trigger input event to update state
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  recognition.onerror = (e) => {
+    if (e.error !== 'aborted' && e.error !== 'no-speech') {
+      Toast.show('Dictation: ' + (e.error || 'error'));
+    }
+  };
+  recognition.onend = () => {
+    btn.classList.remove('recording');
+    activeRecognition = null;
+    // Commit final to draft
+    const draft = State._editingDraft;
+    if (draft) {
+      if (textareaId === 'work-notes') draft.workNotes = ta.value;
+      else if (textareaId === 'service-notes') draft.serviceNotes = ta.value;
+      State._dirty = true;
+    }
+  };
+  try {
+    recognition.start();
+    btn.classList.add('recording');
+    activeRecognition = recognition;
+  } catch (e) {
+    Toast.show('Could not start dictation: ' + (e.message || e));
+  }
+}
+
+// ---- OCR ----
+async function loadTesseract() {
+  if (window.Tesseract) return window.Tesseract;
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js';
+    s.onload = () => resolve(window.Tesseract);
+    s.onerror = () => reject(new Error('Failed to load OCR library'));
+    document.head.appendChild(s);
+  });
+}
+
+async function handleCardScan(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+  Loading.show('Loading OCR engine…');
+  try {
+    const Tesseract = await loadTesseract();
+    Loading.show('Reading card…');
+    const { data } = await Tesseract.recognize(file, 'eng', {});
+    Loading.hide();
+    applyOcrResults((data && data.text) || '');
+  } catch (e) {
+    Loading.hide();
+    Toast.show('Scan failed: ' + (e.message || 'unknown error'));
+  }
+}
+
+function applyOcrResults(text) {
+  const draft = State._editingDraft;
+  if (!draft) return;
+  const lines = text.split(/\n/).map(l => l.trim()).filter(Boolean);
+  const phoneRegex = /(\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/;
+  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+  const urlRegex = /\b(?:https?:\/\/)?[\w.-]+\.[a-z]{2,}(?:\/\S*)?\b/i;
+  let phone = '', email = '', web = '';
+  const otherLines = [];
+  for (const line of lines) {
+    const pm = line.match(phoneRegex);
+    const em = line.match(emailRegex);
+    const um = line.match(urlRegex);
+    if (em && !email) email = em[0];
+    else if (pm && !phone) phone = pm[0];
+    else if (um && !web && !line.includes('@')) web = um[0];
+    else otherLines.push(line);
+  }
+  const guessName = otherLines[0] || '';
+  const guessCompany = otherLines.find(l => /(inc|llc|ltd|co\.?|company|cafe|restaurant|shop|bakery|spa|salon|barber)/i.test(l)) || '';
+  draft.contacts = draft.contacts || [];
+  if (!draft.contacts[0]) draft.contacts[0] = { name: '', role: '', phone: '', email: '' };
+  if (!draft.contacts[0].name && guessName) draft.contacts[0].name = guessName;
+  if (!draft.contacts[0].phone && phone) draft.contacts[0].phone = phone;
+  if (!draft.contacts[0].email && email) draft.contacts[0].email = email;
+  if (!draft.businessName && guessCompany) draft.businessName = guessCompany;
+  if (!draft.googleWebsite && web) draft.googleWebsite = web.startsWith('http') ? web : 'https://' + web;
+  draft.workNotes = (draft.workNotes || '') + `\n\n[Scanned ${fmtDate(todayISO())}]:\n${text.trim()}`;
+  State._dirty = true;
+  Toast.show('Scanned — review the fields');
+  render();
+}
+
+// ---- EXPORT VIEW ----
+function renderExportView() {
+  return `
+    <header class="app-header">
+      <div class="app-title">Export<span class="dot">.</span></div>
+    </header>
+    <main class="main">
+      <div class="export-view">
+        ${State.settings.sheetUrl ? `
+          <div class="export-card">
+            <h3>Open in Google Sheets</h3>
+            <p>Your live data is in Google Sheets. Share it with Stu &amp; Eli (view access) — no weekly exports needed.</p>
+            <a href="${escapeAttr(State.settings.sheetUrl)}" target="_blank" rel="noopener" class="export-btn">${I.sheets}<span>Open Google Sheet</span></a>
+          </div>
+        ` : ''}
+        <div class="export-card">
+          <h3>For Stu &amp; Eli @ Bev Co</h3>
+          <p>Bev Co-relevant fields only — business, address, contacts, stage, work done, revenue.</p>
+          <div class="export-btn-row">
+            <button class="export-btn" data-export="bevco-xlsx">${I.excel}<span>Excel</span></button>
+            <button class="export-btn" data-export="bevco-pdf">${I.pdf}<span>PDF</span></button>
+          </div>
+        </div>
+        <div class="export-card">
+          <h3>Full export</h3>
+          <p>Everything including Amiable status, service notes, commission.</p>
+          <div class="export-btn-row">
+            <button class="export-btn" data-export="full-xlsx">${I.excel}<span>Excel</span></button>
+            <button class="export-btn" data-export="full-pdf">${I.pdf}<span>PDF</span></button>
+          </div>
+        </div>
+        <div class="export-card">
+          <h3>Stats</h3>
+          <p style="margin-bottom:0;">${State.leads.length} leads · ${State.leads.filter(l => l.accountActive).length} active · ${fmtMoney(State.leads.reduce((s,l) => s + (Number(l.revenue) || 0), 0))} revenue · ${fmtMoney(State.leads.reduce((s,l) => s + (Number(l.commission) || 0), 0))} commission</p>
+        </div>
+        <div class="export-card">
+          <h3>Files saved</h3>
+          <p style="margin-bottom:0;">Excel and PDF downloads on iPhone go to <b>Files app → Downloads</b>. From there, share via Mail, Messages, etc.</p>
+        </div>
+      </div>
+    </main>
+  `;
+}
+
+function attachExportListeners() {
+  // No-op: export button clicks are handled by the central click delegate.
+  // Kept as a function so existing callers don't break.
+}
+
+// ---- SETTINGS VIEW ----
+function renderSettings() {
+  const s = State.settings;
+  return `
+    <header class="app-header">
+      <div class="app-title">Settings<span class="dot">.</span></div>
+    </header>
+    <main class="main">
+      <div class="settings-view">
+
+        <div class="form-section">
+          <div class="form-section-title">Google Sheets Sync</div>
+          <div class="field">
+            <label>Apps Script Web App URL</label>
+            <input type="url" id="setting-sheets-url" value="${escapeAttr(s.sheetsUrl)}"
+              placeholder="https://script.google.com/macros/s/.../exec"
+              autocomplete="off" autocorrect="off" autocapitalize="off" enterkeyhint="done"
+              data-setting="sheetsUrl">
+          </div>
+          <button class="btn-primary test-btn" data-action="test-sheets">Test connection</button>
+          <div id="sheets-test-result" style="margin-top:10px;font-size:13px;"></div>
+          <div class="settings-help" style="margin-top:12px;">Must end in <code>/exec</code> and be deployed with "Anyone" access.</div>
+          <div class="field" style="margin-top:14px;">
+            <label>Google Sheet URL (optional — enables "Open Sheet" button)</label>
+            <input type="url" value="${escapeAttr(s.sheetUrl)}"
+              placeholder="https://docs.google.com/spreadsheets/d/..."
+              autocomplete="off" autocorrect="off" autocapitalize="off"
+              data-setting="sheetUrl">
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Google Places API (optional)</div>
+          <div class="field">
+            <label>API Key (for business autocomplete)</label>
+            <input type="password" value="${escapeAttr(s.googleApiKey)}" placeholder="AIza..."
+              autocomplete="off" autocorrect="off" autocapitalize="off"
+              data-setting="googleApiKey" data-reset-gmaps>
+          </div>
+          <button class="btn-primary test-btn" data-action="test-google">Test connection</button>
+          <div id="api-test-result" style="margin-top:10px;font-size:13px;"></div>
+          <div class="settings-help" style="margin-top:12px;">
+            Enable in Google Cloud: <b>Maps JavaScript API</b>, <b>Places API (New)</b>, and <b>Places API</b>.
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Search Area</div>
+          <div class="field-row">
+            <div class="field">
+              <label>Latitude</label>
+              <input type="number" step="0.0001" value="${s.biasLat}" data-setting="biasLat" data-numeric>
+            </div>
+            <div class="field">
+              <label>Longitude</label>
+              <input type="number" step="0.0001" value="${s.biasLng}" data-setting="biasLng" data-numeric>
+            </div>
+          </div>
+          <div class="field">
+            <label>Radius in meters (max 50,000)</label>
+            <input type="number" step="1000" min="1000" max="50000" value="${s.biasRadiusMeters}" data-setting="biasRadiusMeters" data-numeric data-clamp-radius>
+            <div class="settings-help">50km from Richmond covers Vancouver, Burnaby, Surrey, Langley.</div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">About</div>
+          <p style="font-size:13px;color:var(--text-muted);margin:0;line-height:1.6;">
+            Bev Co Lead Tracker · v${APP_VERSION}<br>
+            ${State.leads.length} leads · ${State._pendingSaves.length} pending sync
+          </p>
+          <button class="btn-secondary" style="margin-top:12px;width:auto;flex:0 0 auto;padding:10px 16px;font-size:13px;border-radius:8px;" data-action="force-sync">Force sync from Sheets</button>
+        </div>
+      </div>
+    </main>
+  `;
+}
+
+function attachSettingsListeners() {
+  // NOTE: Click handlers (test buttons, force-sync) are central. Inputs are local since they die with re-render.
+  document.querySelectorAll('[data-setting]').forEach(el => {
+    const field = el.dataset.setting;
+    const isNumeric = el.hasAttribute('data-numeric');
+    el.addEventListener('input', () => {
+      let v = el.value;
+      if (isNumeric) v = parseFloat(v);
+      State.settings[field] = isNumeric ? (Number.isFinite(v) ? v : DEFAULT_SETTINGS[field]) : (typeof v === 'string' ? v.trim() : v);
+      if (el.hasAttribute('data-reset-gmaps')) {
+        // API key changed. If Google Maps is already loaded with the old key, we can't swap.
+        // Mark the flag so we can warn the user when they try to use Places again.
+        if (window.google && window.google.maps) {
+          _gmapsKeyChanged = true;
+        } else {
+          _gmapsPromise = null;
+        }
+        State._sessionToken = null;
+      }
+      saveSettingsLocal();
+    });
+    if (el.hasAttribute('data-clamp-radius')) {
+      el.addEventListener('change', () => {
+        const v = Math.min(MAX_RADIUS, Math.max(1000, parseInt(el.value) || MAX_RADIUS));
+        State.settings.biasRadiusMeters = v;
+        el.value = v;
+        saveSettingsLocal();
+      });
+    }
+  });
+}
+
+async function testGoogleKey() {
+  const result = document.getElementById('api-test-result');
+  if (!result) return;
+  if (!State.settings.googleApiKey) { result.innerHTML = '<span style="color:var(--red);">⚠ Enter an API key first.</span>'; return; }
+  result.innerHTML = '<span class="spinner" style="vertical-align:middle;width:14px;height:14px;border-width:2px;"></span> Testing…';
+  _gmapsPromise = null;
+  const r = await Places.test();
+  if (r.ok) {
+    result.innerHTML = `<span style="color:var(--green);font-weight:600;">✓ Works!</span> Got ${r.count} suggestion${r.count === 1 ? '' : 's'}.`;
+  } else {
+    let hint = '';
+    const err = (r.error || '').toLowerCase();
+    if (err.includes('referer') || err.includes('referrer')) hint = '<br><b>Fix:</b> Your key has a referrer restriction blocking this domain. Add <code>*.github.io/*</code> (or your hosting domain) to the allowed referrers.';
+    else if (err.includes('not authorized') || err.includes('not been enabled') || err.includes('apinotactivated')) hint = '<br><b>Fix:</b> Enable <b>Maps JavaScript API</b> and <b>Places API (New)</b> in Google Cloud Console.';
+    else if (err.includes('invalidkey') || err.includes('api key not valid')) hint = '<br><b>Fix:</b> The API key is invalid.';
+    else if (err.includes('billing')) hint = '<br><b>Fix:</b> Enable billing on your Google Cloud project.';
+    result.innerHTML = `<span style="color:var(--red);font-weight:600;">⚠ ${escapeHtml(r.error)}</span>${hint}`;
+  }
+}
+
+async function testSheetsConnection() {
+  const result = document.getElementById('sheets-test-result');
+  if (!result) return;
+  if (!State.settings.sheetsUrl) { result.innerHTML = '<span style="color:var(--red);">⚠ Enter the URL first.</span>'; return; }
+  if (!/\/exec(?:\?|$)/.test(State.settings.sheetsUrl)) {
+    result.innerHTML = '<span style="color:var(--amber);">⚠ URL should end with <code>/exec</code></span>';
+    return;
+  }
+  result.innerHTML = '<span class="spinner" style="vertical-align:middle;width:14px;height:14px;border-width:2px;"></span> Testing…';
+  const r = await Sheets.ping();
+  if (r.ok) {
+    result.innerHTML = `<span style="color:var(--green);font-weight:600;">✓ Connected!</span> ${escapeHtml(r.message || '')}`;
+    // Auto-sync
+    syncFromSheets();
+  } else {
+    let hint = '';
+    const err = (r.error || '').toLowerCase();
+    if (err.includes('html instead of json')) hint = '<br><b>Fix:</b> Re-deploy your Apps Script with "Who has access" set to <b>Anyone</b>.';
+    else if (err.includes('401') || err.includes('403')) hint = '<br><b>Fix:</b> Set deployment access to <b>Anyone</b> and re-deploy.';
+    else if (err.includes('404')) hint = '<br><b>Fix:</b> Check the URL ends with <code>/exec</code>.';
+    else if (err.includes('timed out') || err.includes('failed to fetch')) hint = '<br><b>Fix:</b> Check network. Try the URL in a browser to see if it returns JSON.';
+    result.innerHTML = `<span style="color:var(--red);font-weight:600;">⚠ ${escapeHtml(r.error)}</span>${hint}`;
+  }
+}
+
+// ---- EXPORTS ----
+function bevcoRow(l) {
+  const c = (l.contacts && l.contacts[0]) || {};
+  const completed = CHECKLIST_ITEMS.filter(i => l.checklist && l.checklist[i.id]).map(i => i.label).join('; ');
+  return {
+    'Business Name': l.businessName || '', 'Address': l.address || '',
+    'Contact': c.name || '', 'Role': c.role || '', 'Phone': c.phone || l.googlePhone || '', 'Email': c.email || '',
+    'Date Generated': l.dateGenerated || '', 'Pre-Handoff Work': completed,
+    'Work Notes': l.workNotes || '', 'Bev Co Stage': BEV_STAGE_LABEL(l.bevStage),
+    'Account Active': l.accountActive ? 'Yes' : 'No', 'Date Active': l.accountActiveDate || '',
+    'Revenue (CAD)': Number(l.revenue) || 0,
+  };
+}
+function fullRow(l) {
+  const base = bevcoRow(l);
+  base['Commission (CAD)'] = Number(l.commission) || 0;
+  base['Amiable Stage'] = (AMIABLE_STAGES.find(s => s.id === l.amiableStage) || {label: l.amiableStage}).label;
+  base['Service Notes'] = l.serviceNotes || '';
+  base['Last Updated'] = l.updatedAt ? fmtDate(l.updatedAt) : '';
+  return base;
+}
+const dateStamp = () => todayISO();
+
+function exportBevCoExcel() { exportExcel(State.leads.map(bevcoRow), `BevCo_Leads_${dateStamp()}.xlsx`, 'Bev Co Leads'); }
+function exportFullExcel() { exportExcel(State.leads.map(fullRow), `Leads_Full_${dateStamp()}.xlsx`, 'Leads'); }
+
+function exportExcel(rows, filename, sheetName) {
+  if (!rows.length) return Toast.show('No leads to export');
+  if (typeof XLSX === 'undefined') return Toast.show('Export library not loaded');
+  try {
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const cols = Object.keys(rows[0]);
+    ws['!cols'] = cols.map(c => {
+      const max = Math.max(c.length, ...rows.map(r => String(r[c] ?? '').length));
+      return { wch: Math.min(Math.max(max + 2, 12), 50) };
+    });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, filename);
+    Toast.show('Excel saved to Downloads');
+  } catch (e) {
+    console.error(e);
+    Toast.show('Excel export failed: ' + (e.message || e));
+  }
+}
+
+function exportBevCoPdf() { exportPdf(State.leads.map(bevcoRow), `BevCo_Leads_${dateStamp()}.pdf`, 'Bev Co — Leads'); }
+function exportFullPdf() { exportPdf(State.leads.map(fullRow), `Leads_Full_${dateStamp()}.pdf`, 'Lead Tracker'); }
+
+function exportPdf(rows, filename, title) {
+  if (!rows.length) return Toast.show('No leads to export');
+  try {
+    const { jsPDF } = window.jspdf || {};
+    if (!jsPDF) return Toast.show('PDF library not loaded');
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'letter' });
+    doc.setFontSize(16); doc.setTextColor(46, 162, 220);
+    doc.text(title, 40, 40);
+    doc.setFontSize(9); doc.setTextColor(120);
+    doc.text(`${new Date().toLocaleString('en-CA')} · ${rows.length} leads`, 40, 56);
+    const cols = Object.keys(rows[0]);
+    doc.autoTable({
+      head: [cols],
+      body: rows.map(r => cols.map(c => typeof r[c] === 'number' && /Revenue|Commission/i.test(c) ? fmtMoney(r[c]) : String(r[c] ?? ''))),
+      startY: 70,
+      styles: { fontSize: 7, cellPadding: 3, overflow: 'linebreak' },
+      headStyles: { fillColor: [46, 162, 220], textColor: 255 },
+      margin: { left: 40, right: 40 },
+    });
+    doc.save(filename);
+    Toast.show('PDF saved to Downloads');
+  } catch (e) {
+    console.error(e);
+    Toast.show('PDF export failed: ' + (e.message || e));
+  }
+}
+
+// ---- TABS ----
+function setupTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      const tab = t.dataset.tab;
+      const target = tab === 'list' ? 'list' : tab;
+      if (State.view === 'editor' && State._dirty) {
+        Modal.confirm({
+          title: 'Discard changes?',
+          message: 'Leaving will discard unsaved edits.',
+          yesLabel: 'Discard',
+          danger: true,
+          onYes: () => {
+            State._editingDraft = null;
+            State._editingOriginal = null;
+            State._dirty = false;
+            State.view = target;
+            render();
+          }
+        });
+        return;
+      }
+      State.view = target;
+      render();
+    });
+  });
+}
+
+// ---- CENTRAL CLICK DELEGATION ----
+// Bound ONCE on #app-content during init. Prevents stale listener accumulation that
+// caused multiple openEditor calls per tap, and similar bugs.
+function setupGlobalClickHandler() {
+  const content = document.getElementById('app-content');
+  if (!content || content._clickBound) return;
+  content._clickBound = true;
+  content.addEventListener('click', e => {
+    // Editor view has its own handler bound separately (editorClickHandler) — let that handle it.
+    // But the editor's handler only matches [data-action] inside #editor-main, so safe to also process below.
+
+    // Lead card tap (list view)
+    const card = e.target.closest('.lead-card[data-lead-id]');
+    if (card && State.view === 'list') { openEditor(card.dataset.leadId); return; }
+
+    // Filter chip (list view)
+    const chip = e.target.closest('[data-filter]');
+    if (chip && State.view === 'list') {
+      State.filter = chip.dataset.filter;
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      rerenderList();
+      return;
+    }
+
+    // Export buttons (export view)
+    const exportBtn = e.target.closest('[data-export]');
+    if (exportBtn) {
+      const type = exportBtn.dataset.export;
+      if (type === 'bevco-xlsx') exportBevCoExcel();
+      else if (type === 'bevco-pdf') exportBevCoPdf();
+      else if (type === 'full-xlsx') exportFullExcel();
+      else if (type === 'full-pdf') exportFullPdf();
+      return;
+    }
+
+    // Generic actions
+    const action = e.target.closest('[data-action]');
+    if (action) {
+      const a = action.dataset.action;
+      // List view actions
+      if (State.view === 'list') {
+        if (a === 'new-lead') { openEditor(); return; }
+        if (a === 'sync-now') { syncFromSheets(); return; }
+        if (a === 'go-settings') { State.view = 'settings'; render(); return; }
+        if (a === 'show-sync-info') { showSyncInfo(); return; }
+      }
+      // Settings actions
+      if (State.view === 'settings') {
+        if (a === 'test-sheets') { testSheetsConnection(); return; }
+        if (a === 'test-google') { testGoogleKey(); return; }
+        if (a === 'force-sync') { syncFromSheets(); return; }
+      }
+      // Editor actions handled by editorClickHandler (separate), which also fires on this listener
+      // because both are bound to #app-content. To avoid double-firing, editorClickHandler guards
+      // on the presence of #editor-main; this handler doesn't touch editor [data-action]s.
+    }
+  });
+}
+
+
+async function init() {
+  try {
+    setupTabs();
+    loadFromLocal();
+    // Ensure all loaded leads have proper shape
+    State.leads = State.leads.map(ensureLeadShape);
+    saveLeadsLocal();
+
+    setSync(
+      State.settings.sheetsUrl ? 'idle' : 'idle',
+      State.settings.sheetsUrl ? (State._pendingSaves.length ? `${State._pendingSaves.length} pending` : 'Connected') : 'Local only'
+    );
+    render();
+    setupGlobalClickHandler(); // bound ONCE after first render
+
+    if (State.settings.sheetsUrl) {
+      // Background sync on init (silent)
+      syncFromSheets({ silent: true });
+    }
+
+    // Pull-to-refresh-ish: sync when app regains focus
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && State.settings.sheetsUrl && State.view === 'list') {
+        syncFromSheets({ silent: true });
+      }
+    });
+
+    // Online/offline events
+    window.addEventListener('online', () => {
+      if (State.settings.sheetsUrl) {
+        Toast.show('Back online — syncing');
+        syncFromSheets({ silent: true });
+      }
+    });
+    window.addEventListener('offline', () => {
+      setSync('err', 'Offline');
+      State.syncError = 'Offline — changes will be queued';
+    });
+
+    // Catch global errors
+    window.addEventListener('error', e => {
+      console.error('Global error:', e.error || e.message);
+    });
+    window.addEventListener('unhandledrejection', e => {
+      console.error('Unhandled rejection:', e.reason);
+    });
+
+  } catch (e) {
+    console.error('Init failed:', e);
+    document.getElementById('app-content').innerHTML = `
+      <div style="padding:40px 20px;text-align:center;">
+        <h2 style="color:var(--red);">Failed to start</h2>
+        <p style="color:var(--text-muted);font-size:14px;">${escapeHtml(e.message || String(e))}</p>
+        <button class="btn-primary" style="margin-top:20px;padding:12px 24px;border-radius:8px;" onclick="location.reload()">Reload</button>
+      </div>`;
+  }
+}
+
+if (document.readyState !== 'loading') init();
+else document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
